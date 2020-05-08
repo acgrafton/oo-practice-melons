@@ -1,6 +1,7 @@
 ############
 # Part 1   #
 ############
+import re
 
 
 class MelonType(object):
@@ -103,20 +104,22 @@ class Melon(object):
                               and self.harvested_from_field != 3) else False
 
 
-def make_melons():
+def make_melons(melon_types):
     """Returns a list of Melon objects."""
 
     list_of_melons = []
 
-    melon_1 = Melon('yw',8,7,2,'Sheila')
-    melon_2 = Melon('yw',3,4,2,'Sheila')
-    melon_3 = Melon('yw',9,8,3,'Sheila')
-    melon_4 = Melon('cas',10,6,35,'Sheila')
-    melon_5 = Melon('cren',8,9,35,'Michael')
-    melon_6 = Melon('cren',8,2,35,'Michael')
-    melon_7 = Melon('cren',2,3,4,'Michael')
-    melon_8 = Melon('musk',6,7,4,'Michael')
-    melon_9 = Melon('yw',7,10,3,'Sheila')
+    melons_by_id = make_melon_type_lookup(melon_types)
+
+    melon_1 = Melon(melons_by_id['yw'],8,7,2,'Sheila')
+    melon_2 = Melon(melons_by_id['yw'],3,4,2,'Sheila')
+    melon_3 = Melon(melons_by_id['yw'],9,8,3,'Sheila')
+    melon_4 = Melon(melons_by_id['cas'],10,6,35,'Sheila')
+    melon_5 = Melon(melons_by_id['cren'],8,9,35,'Michael')
+    melon_6 = Melon(melons_by_id['cren'],8,2,35,'Michael')
+    melon_7 = Melon(melons_by_id['cren'],2,3,4,'Michael')
+    melon_8 = Melon(melons_by_id['musk'],2,3,4,'Michael')
+    melon_9 = Melon(melons_by_id['yw'],7,10,3,'Sheila')
 
     return [melon_1, melon_2, melon_3, melon_4, melon_5, 
             melon_6, melon_7, melon_8, melon_9]
@@ -129,11 +132,51 @@ def get_sellability_report(melons):
     #and sellability.
     for melon in melons:
         sellable = "(CAN BE SOLD)" if melon.is_sellable() else "(NOT SELLABLE)"
-        print(f"Harvested by {melon.harvested_by} from Field {melon.harvested_from_field}", sellable)
+        print(f"Harvested by {melon.harvested_by} from Field {melon.harvested_from_field}", 
+                                                              sellable)
 
-harvested_melons = make_melons()
+def bulk_add_melons_from_harvest_log(path, melon_types):
+    """Given a harvest log, return a list of melon objects"""
+
+    #Open file
+    harvest_log = open(path)
+
+    #Get list of melon type by melon code.
+    melons_by_id = make_melon_type_lookup(melon_types)
+
+    #Create empty list to add melon objects
+    list_of_melons = []
+
+    #Iterate through file by line and make Regular Expression groupings for 
+    #required arguments to make melon.
+    for line in harvest_log:
+        line = line.rstrip()
+        match_line = re.search(
+                    r"Shape (\d+) Color (\d+) Type (\w+) Harvested By (\w+) Field # (\d+)",line)
+
+        #Assign variables to required arguments for melon.
+        shape = match_line.group(1)
+        color = match_line.group(2)
+        code = match_line.group(3)
+        harvest_by = match_line.group(4)
+        harvest_from = match_line.group(5)
+
+        #Make melon
+        melon = Melon(melons_by_id[code],shape,color,harvest_from,harvest_by)
+        list_of_melons.append(melon) #Append melon to melon list
+
+    return list_of_melons #Return melon list
+
+    harvest_log.close()
+
+harvested_melons = make_melons(original_melons_types)
 
 get_sellability_report(harvested_melons)
+
+new_harvested_melons = bulk_add_melons_from_harvest_log("harvest_log.txt",original_melons_types)
+
+for index, melon in enumerate(new_harvested_melons):
+    print(index+1,melon.type, melon.shape_rating, melon.color_rating, melon.harvested_from_field, melon.harvested_by)
 
 
 
